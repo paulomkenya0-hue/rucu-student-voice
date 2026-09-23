@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% block title %}Fuatilia — RUCU Mikopo{% endblock %}
+{% block content %}
+<h2 data-sw="Fuatilia Majibu" data-en="Track Responses">Fuatilia Majibu</h2>
+<div class="grid2">
+<div class="card"><h4>Kwa reference number</h4>
+<label>Reference (e.g. RUCU-2026-000184)<input id="ref"></label>
+<button class="btn primary" onclick="track()">Track</button></div>
+<div class="card"><h4>Ingia na password (maoni yangu yote)</h4>
+<label>Registration number<input id="l-reg" placeholder="e.g. RU/BAFIT/2024/007"></label>
+<label>Password<input id="l-pw" type="password"></label>
+<button class="btn" onclick="login()">Ingia</button>
+<div id="mine"></div></div>
+</div>
+<div id="out"></div>
+{% endblock %}
+{% block scripts %}<script>
+let STOK=localStorage.getItem('stu_token')||'';
+async function track(){const ref=document.getElementById('ref').value.trim(); if(!ref) return;
+const r=await fetch('/api/track/'+encodeURIComponent(ref)); const d=await r.json();
+if(!r.ok){document.getElementById('out').innerHTML=`<div class="card err">${d.error}</div>`;return;}
+document.getElementById('out').innerHTML=`<div class="card"><h3>${d.reference_number} — ${d.title}</h3>
+<p>Status: <span class="badge">${d.status}</span> · ${d.created_at.slice(0,10)}</p><p>${d.description}</p>
+<h4>Jibu la hivi karibuni (SMS pia hutumwa)</h4><p>${d.recent_responses.length?d.recent_responses[0].response:'Hakuna jibu bado.'}</p>
+<h4>Timeline</h4><ol>${d.history.map(h=>`<li>${h.created_at.slice(0,16)}: ${h.old_status||'—'} → <b>${h.new_status}</b></li>`).join('')}</ol></div>`;}
+async function login(){const r=await fetch('/api/student/login',{method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({registration_number:document.getElementById('l-reg').value,password:document.getElementById('l-pw').value})});
+const d=await r.json(); if(!r.ok){alert(d.error);return;}
+STOK=d.token; localStorage.setItem('stu_token',STOK); mine();}
+async function mine(){const r=await fetch('/api/student/my-feedback',{headers:{'X-Student-Token':STOK}});
+const d=await r.json();
+document.getElementById('mine').innerHTML=(d.error||[]).map? (d.error||d.map(x=>`<p><b>${x.reference_number}</b> — ${x.title}<br>Status: ${x.status} · Jibu: ${x.latest_response||'—'}</p>`).join('')):d.error;}
+if(STOK) mine();
+</script>{% endblock %}

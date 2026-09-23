@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}Users — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Admin Users (Super Admin)</h2>
+<div class="card"><div class="grid2"><input id="u-name" placeholder="Name"><input id="u-email" placeholder="Email">
+<input id="u-pw" placeholder="Password" type="password"><select id="u-role"><option>OFFICER</option><option>SUPER ADMIN</option></select></div>
+<button class="btn primary" onclick="add()">Add user</button></div>
+<div class="card"><div id="list"></div></div>{% endblock %}
+{% block scripts %}<script>
+async function load(){const d=await (await fetch('/api/admin/users',{headers:H()})).json();
+document.getElementById('list').innerHTML=d.error||d.map? (d.error||d.map(u=>`<p>${u.name} — ${u.email} (${u.role})</p>`).join('')):d.error;}
+async function add(){await fetch('/api/admin/users',{method:'POST',headers:H(),body:JSON.stringify({name:document.getElementById('u-name').value,email:document.getElementById('u-email').value,password:document.getElementById('u-pw').value,role:document.getElementById('u-role').value})});load();}
+load();
+</script>{% endblock %}

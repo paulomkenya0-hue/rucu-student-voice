@@ -1,0 +1,22 @@
+<div class="adminnav wrap">
+<a href="/dashboard">Dashboard</a><a href="/issues">Issues</a><a href="/appeals">Appeals</a><a href="/announcements">Matangazo</a><a href="/reports">Reports</a>
+<a href="/roster">Roster / SMS</a><a href="/settings">Settings</a><a href="/users">Users</a>
+<button onclick="logout()">Logout</button>
+<button class="ai-fab" onclick="document.getElementById('ai-box').style.display='block'">Ask RUCUSO AI</button>
+</div>
+<div id="ai-box" class="ai-box" style="display:none">
+<h4>RUCUSO AI — Your System Assistant <button onclick="this.parentElement.parentElement.style.display='none'">×</button></h4>
+<div id="ai-log" class="ai-log"></div>
+<input id="ai-q" placeholder="e.g. Nianzie wapi? / Which challenges are most reported?">
+<button class="btn primary" onclick="aiAsk()">Ask</button>
+<button class="btn" onclick="aiAsk('Analyze this report')">Analyze This Report</button>
+</div>
+<script>
+const TOK=localStorage.getItem('rucu_token'); if(!TOK&&location.pathname!=='/admin-login') location.href='/admin-login';
+function H(){return {'Content-Type':'application/json','Authorization':'Bearer '+TOK}}
+function logout(){fetch('/api/admin/logout',{method:'POST',headers:H()}).finally(()=>{localStorage.removeItem('rucu_token');location.href='/admin-login'})}
+async function aiAsk(pre){const q=pre||document.getElementById('ai-q').value; if(!q) return;
+const log=document.getElementById('ai-log'); log.innerHTML+=`<p><b>You:</b> ${q}</p>`;
+const r=await fetch('/api/ai/ask',{method:'POST',headers:H(),body:JSON.stringify({question:q,page:location.pathname})});
+const d=await r.json(); log.innerHTML+=`<p><b>RUCUSO AI:</b><br>${(d.answer||'').replace(/\n/g,'<br>')}</p>`; log.scrollTop=1e6;}
+</script>

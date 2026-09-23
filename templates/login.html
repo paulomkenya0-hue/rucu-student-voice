@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block title %}Admin Login — RUCU{% endblock %}
+{% block content %}
+<h2>Admin Login</h2><div class="card narrow">
+<label>Email<input id="email" value="admin@rucu.ac.tz"></label>
+<label>Password<input id="pw" type="password" value="RucuAdmin2026"></label>
+<button class="btn primary" onclick="login()">Login</button><div id="msg"></div>
+<p class="muted">Default: admin@rucu.ac.tz / RucuAdmin2026 — change after first login.</p>
+</div>{% endblock %}
+{% block scripts %}<script>
+async function login(){const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({email:document.getElementById('email').value,password:document.getElementById('pw').value})});
+const d=await r.json(); if(!r.ok){document.getElementById('msg').textContent=d.error;return;}
+localStorage.setItem('rucu_token',d.token); location.href='/dashboard';}
+</script>{% endblock %}

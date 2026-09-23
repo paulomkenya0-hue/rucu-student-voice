@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block title %}Issue {{ ref }} — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2 id="t">Issue {{ ref }}</h2><div id="d"></div>
+<div class="grid2">
+<div class="card"><h4>Change status</h4><select id="ns"><option>New</option><option>Under Review</option><option>Assigned</option><option>In Progress</option><option>Awaiting Information</option><option>Resolved</option><option>Closed</option><option>Rejected/Invalid</option></select>
+<button class="btn" onclick="setStatus()">Update Status</button>
+<h4>Assign officer</h4><select id="off"></select><button class="btn" onclick="assign()">Assign</button></div>
+<div class="card"><h4>Respond to student</h4><textarea id="resp" rows="3"></textarea><button class="btn primary" onclick="respond()">Send Response</button>
+<h4>Internal note</h4><textarea id="note" rows="2"></textarea><button class="btn" onclick="addNote()">Add Note</button></div>
+</div>
+<div class="card"><h4>Activity history (audit trail)</h4><div id="hist"></div></div>
+{% endblock %}
+{% block scripts %}<script>
+const REF="{{ ref }}";
+async function refresh(){const d=await (await fetch('/api/admin/feedback/'+REF,{headers:H()})).json();
+document.getElementById('d').innerHTML=`<div class="card"><p><b>${d.reference_number}</b> · ${d.created_at} · ${d.category_name||'-'} · ${d.submission_type} · <span class="badge">${d.priority}</span> <span class="badge">${d.status}</span></p><p>${d.description}</p><p><b>Student:</b> ${d.student_name||'-'} · ${d.registration_number||'-'} · verified: ${d.reg_verified?'yes':'no'}</p><p><b>Suggested:</b> ${d.suggested_solution||'-'}</p><h4>Responses</h4>${(d.responses||[]).map(r=>`<p>${r.created_at.slice(0,16)} — ${r.admin_name||''}: ${r.response}</p>`).join('')||'<p class=muted>None</p>'}<h4>Internal notes</h4>${(d.notes||[]).map(r=>`<p>${r.created_at.slice(0,16)} — ${r.admin_name||''}: ${r.note}</p>`).join('')||'<p class=muted>None</p>'}</div>`;
+document.getElementById('hist').innerHTML=(d.history||[]).map(h=>`<p>${h.created_at.slice(0,16)}: ${h.old_status||'—'} → <b>${h.new_status}</b> by ${h.changed_by_name||'system'}</p>`).join('');
+const offs=await (await fetch('/api/admin/officers',{headers:H()})).json();
+document.getElementById('off').innerHTML=offs.map(o=>`<option value="${o.id}">${o.name} (${o.role})</option>`).join('');}
+async function setStatus(){await fetch('/api/admin/feedback/'+REF+'/status',{method:'PUT',headers:H(),body:JSON.stringify({status:document.getElementById('ns').value})});refresh();}
+async function assign(){await fetch('/api/admin/feedback/'+REF+'/assign',{method:'PUT',headers:H(),body:JSON.stringify({officer_id:document.getElementById('off').value})});refresh();}
+async function respond(){await fetch('/api/admin/feedback/'+REF+'/respond',{method:'POST',headers:H(),body:JSON.stringify({response:document.getElementById('resp').value})});refresh();}
+async function addNote(){await fetch('/api/admin/feedback/'+REF+'/note',{method:'POST',headers:H(),body:JSON.stringify({note:document.getElementById('note').value})});refresh();}
+refresh();
+</script>{% endblock %}

@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="RUCU Student Voice — Ruaha Catholic University student feedback on loans (HELSB/BOOM/fees). Toa maoni, ripoti changamoto ya mkopo, fuatilia majibu.">
+<meta property="og:title" content="RUCU Student Voice — Maoni ya Wanafunzi kuhusu Mikopo">
+<meta property="og:description" content="Sauti yako kuhusu Wizara ya Mikopo (HELSB/BOOM/Ada). Tuma maoni, fuatilia majibu.">
+<title>{% block title %}RUCU Student Voice{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head><body>
+<header class="topbar"><div class="wrap">
+<div class="brand"><div class="logo">RUCU</div>
+<div><strong>RUCU STUDENT VOICE</strong><small>Ruaha Catholic University — Student Feedback & Institutional Improvement</small></div></div>
+<nav><a href="/" data-sw="Nyumbani" data-en="Home">Nyumbani</a><a href="/submit" data-sw="Tuma" data-en="Submit">Tuma</a><a href="/my" data-sw="Kwangu" data-en="My Space">Kwangu</a><a href="/track" data-sw="Fuatilia" data-en="Track">Fuatilia</a><a href="/admin-login">Admin</a><button id="langbtn" onclick="toggleLang()">EN</button></nav>
+</div></header>
+<main class="wrap">{% block content %}{% endblock %}</main>
+<footer class="footer"><div class="wrap">
+RUCU Student Voice — Student Feedback & Institutional Improvement<br>
+<span id="foot-year"></span> · Developed by Paulo Mkenya © Ruaha Catholic University
+</div></footer>
+<script src="/static/app.js"></script>
+<script src="/static/lang.js"></script>
+{% block scripts %}{% endblock %}
+</body></html>

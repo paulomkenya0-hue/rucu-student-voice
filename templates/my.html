@@ -1,0 +1,49 @@
+{% extends "base.html" %}{% block title %}My Space — RUCU Mikopo{% endblock %}
+{% block content %}
+<h2 data-sw="Sehemu Yangu (My Space)" data-en="My Space">Sehemu Yangu (My Space)</h2>
+<div class="card" id="login-card">
+<h4>Ingia</h4>
+<div class="grid2"><label>Registration number<input id="r" placeholder="e.g. RU/BAFIT/2024/007"></label>
+<label>Password<input id="p" type="password"></label></div>
+<button class="btn primary" onclick="login()">Ingia</button>
+<p class="muted">Huna password? Nenda <a href="/submit">Submit</a> — uta-verify OTP na kuweka password hatua ya 3.</p>
+</div>
+<div id="space" style="display:none">
+<div class="card"><h3 id="who"></h3><p id="prof" class="muted"></p><div id="counts" class="statgrid"></div>
+<button class="btn" onclick="logout()">Toka</button> <a class="btn primary" href="/submit">Maoni mapya</a></div>
+<div class="card"><h4>Maoni yangu + majibu ya admin</h4><div id="list"></div></div>
+<div class="card"><h4>Rufaa (appeal) — kwa maoni yaliyofungwa usiyoridhika nayo</h4>
+<div class="grid2"><input id="ap-ref" placeholder="Reference e.g. RUCU-2026-900002"><input id="ap-why" placeholder="Sababu ya rufaa…"></div>
+<button class="btn" onclick="appeal()">Tuma rufaa</button><div id="aplist"></div></div>
+<div class="card"><h4>Kura ya muhula</h4><div id="pollbox"></div></div>
+<div class="card"><h4>SMS zangu (taarifa)</h4><div id="msgs"></div></div>
+</div>
+<div class="card"><h4>Matangazo ya chuo</h4><div id="notices">Loading…</div></div>
+{% endblock %}
+{% block scripts %}<script>
+let T=localStorage.getItem('stu_token')||'';
+async function login(){const r=await fetch('/api/student/login',{method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({registration_number:document.getElementById('r').value,password:document.getElementById('p').value})});
+const d=await r.json(); if(!r.ok){alert(d.error);return;} T=d.token; localStorage.setItem('stu_token',T); load();}
+function logout(){localStorage.removeItem('stu_token');T='';location.reload();}
+async function load(){if(!T) return;
+const H={'X-Student-Token':T};
+const p=await (await fetch('/api/student/profile',{headers:H})).json();
+if(p.error){return;}
+document.getElementById('login-card').style.display='none'; document.getElementById('space').style.display='block';
+document.getElementById('who').textContent=(p.profile.full_name||'')+' — '+p.registration_number;
+document.getElementById('prof').textContent=(p.profile.programme||'')+' · '+(p.profile.year_of_study||'')+' · '+p.phone;
+document.getElementById('counts').innerHTML=Object.entries(p.by_status).map(([k,v])=>`<div class="stat"><small>${k}</small><b>${v}</b></div>`).join('')||'<p class=muted>Huna maoni bado.</p>';
+const f=await (await fetch('/api/student/my-feedback',{headers:H})).json();
+document.getElementById('list').innerHTML=f.map(x=>`<p><b>${x.reference_number}</b> — ${x.title}<br>Status: <span class="badge">${x.status}</span><br>Jibu: ${x.latest_response||'—'}</p>`).join('')||'<p class=muted>Hakuna.</p>';
+const m=await (await fetch('/api/student/my-messages',{headers:H})).json();
+document.getElementById('msgs').innerHTML=m.map(x=>`<p>${x.created_at.slice(0,16)} · ${x.reference_number}: ${x.message}</p>`).join('')||'<p class=muted>Hakuna SMS bado.</p>';
+const ap=await (await fetch('/api/student/appeals',{headers:H})).json();
+document.getElementById('aplist').innerHTML=ap.map(x=>`<p><b>${x.reference_number}</b> <span class="badge">${x.status}</span><br>${x.reason}<br>Jibu: ${x.admin_response||'—'}</p>`).join('')||'<p class=muted>Hakuna rufaa.</p>';
+const pl=await (await fetch('/api/poll')).json();
+document.getElementById('pollbox').innerHTML=pl.active?`<p>${pl.question}</p><div class="btnrow">${[1,2,3,4,5].map(n=>`<button class="btn" onclick="pv(${n})">${n}★</button>`).join('')}</div><p class="muted">Kura: ${pl.total} · Wastani: ${pl.average}/5</p>`:'Hakuna kura kwa sasa.';}
+async function pv(n){const r=await fetch('/api/poll/vote',{method:'POST',headers:{'Content-Type':'application/json','X-Student-Token':T},body:JSON.stringify({rating:n})});const d=await r.json();alert(d.message||d.error);load();}
+async function appeal(){const r=await fetch('/api/student/appeal',{method:'POST',headers:{'Content-Type':'application/json','X-Student-Token':T},body:JSON.stringify({reference_number:document.getElementById('ap-ref').value,reason:document.getElementById('ap-why').value})});const d=await r.json();alert(d.message||d.error);load();}
+fetch('/api/announcements').then(r=>r.json()).then(a=>{document.getElementById('notices').innerHTML=a.map(x=>`<p><b>${x.title}</b><br>${x.message}</p>`).join('')||'Hakuna matangazo.';});
+load();
+</script>{% endblock %}

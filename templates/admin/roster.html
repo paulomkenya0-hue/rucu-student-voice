@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% block title %}Roster, SMS & BOOM — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Roster, SMS & Wapokea Mkopo (BOOM/Ada)</h2>
+<div class="card"><h4>1. Roster ya wanafunzi (verify reg) — columns: full_name, registration_number, programme, year_of_study, phone</h4>
+<input type="file" id="f" accept=".csv,.xlsx,.xls"><button class="btn primary" onclick="up()">Upload roster</button><div id="msg"></div></div>
+<div class="card"><h4>2. Wapokea mkopo (majina + namba za simu) — columns: full_name, registration_number, phone, amount</h4>
+<p class="muted">Huko mbeleni ukiweka orodha hii, BOOM au ada ikiingia utawat pot SMS wote kwa click moja hapa chini.</p>
+<input type="file" id="lf" accept=".csv,.xlsx,.xls"><button class="btn primary" onclick="upLoan()">Upload loan list</button><div id="lmsg"></div>
+<div id="loan-total"></div></div>
+<div class="card"><h4>3. Tuma SMS ya BOOM/Ada kwa wapokea mkopo wote</h4>
+<textarea id="bulk" rows="3" placeholder="e.g. Ndugu mwanafunzi, BOOM ya mwezi huu imeingia. Asante."></textarea>
+<button class="btn danger" onclick="bulk()">Tuma bulk SMS</button><div id="bmsg"></div></div>
+<div class="card"><h4>SMS log</h4><div id="sms"></div></div>
+{% endblock %}
+{% block scripts %}<script>
+async function up(){const f=document.getElementById('f').files[0]; if(!f) return;
+const fd=new FormData(); fd.append('file',f);
+const r=await fetch('/api/admin/roster/upload',{method:'POST',headers:{'Authorization':'Bearer '+TOK},body:fd});
+const d=await r.json(); document.getElementById('msg').textContent=r.ok?`Imported ${d.imported}, total ${d.total_in_roster}`:d.error;}
+async function upLoan(){const f=document.getElementById('lf').files[0]; if(!f) return;
+const fd=new FormData(); fd.append('file',f);
+const r=await fetch('/api/admin/loan-recipients/upload',{method:'POST',headers:{'Authorization':'Bearer '+TOK},body:fd});
+const d=await r.json(); document.getElementById('lmsg').textContent=r.ok?`Imported ${d.imported}, total ${d.total}`:d.error; load();}
+async function bulk(){const r=await fetch('/api/admin/bulk-sms',{method:'POST',headers:H(),body:JSON.stringify({message:document.getElementById('bulk').value})});
+const d=await r.json(); document.getElementById('bmsg').textContent=r.ok?`Sent/logged to ${d.sent} recipients. ${d.note}`:d.error; load();}
+async function load(){const l=await (await fetch('/api/admin/loan-recipients',{headers:H()})).json();
+document.getElementById('loan-total').innerHTML='Wapokea mkopo: <b>'+(l.total||0)+'</b>';
+const s=await (await fetch('/api/admin/sms-log',{headers:H()})).json();
+document.getElementById('sms').innerHTML=s.map(x=>`<p>${x.created_at.slice(0,16)} → ${x.phone} [${x.status}]: ${x.message.slice(0,120)}</p>`).join('')||'No SMS yet.';}
+load();
+</script>{% endblock %}

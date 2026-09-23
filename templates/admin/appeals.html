@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block title %}Rufani — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Rufaa (Appeals)</h2>
+<div class="card"><div id="list"></div></div>{% endblock %}
+{% block scripts %}<script>
+async function load(){const d=await (await fetch('/api/admin/appeals',{headers:H()})).json();
+document.getElementById('list').innerHTML=d.map(a=>`<div class="card"><p><b>${a.reference_number}</b> — ${a.title} <span class="badge">${a.status}</span></p><p>Sababu: ${a.reason}</p><p>Jibu: ${a.admin_response||'—'}</p>
+<textarea id="r${a.id}" rows="2" placeholder="Jibu la admin…"></textarea>
+<div class="btnrow"><button class="btn" onclick="res(${a.id},'Under Review')">Fungua upya</button><button class="btn primary" onclick="res(${a.id},'Closed')">Funga</button></div></div>`).join('')||'Hakuna rufaa.';}
+async function res(id,st){await fetch('/api/admin/appeals/'+id+'/resolve',{method:'PUT',headers:H(),body:JSON.stringify({status:st,admin_response:document.getElementById('r'+id).value})});load();}
+load();
+</script>{% endblock %}

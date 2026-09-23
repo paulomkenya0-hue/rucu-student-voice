@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block title %}Issues — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Issue Management</h2>
+<div class="card filters"><input id="f-search" placeholder="Search ref/title…">
+<select id="f-status"><option value="">All statuses</option><option>New</option><option>Under Review</option><option>Assigned</option><option>In Progress</option><option>Awaiting Information</option><option>Resolved</option><option>Closed</option><option>Rejected/Invalid</option></select>
+<select id="f-pri"><option value="">All priorities</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select>
+<button class="btn" onclick="load()">Filter</button></div>
+<div class="tablewrap"><table><thead><tr><th>Ref</th><th>Date</th><th>Category</th><th>Type</th><th>Subject</th><th>Student</th><th>Priority</th><th>Status</th><th>Officer</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+{% endblock %}
+{% block scripts %}<script>
+async function load(){const p=new URLSearchParams({search:document.getElementById('f-search').value,status:document.getElementById('f-status').value,priority:document.getElementById('f-pri').value});
+const d=await (await fetch('/api/admin/feedback?'+p,{headers:H()})).json();
+document.getElementById('rows').innerHTML=d.map(x=>`<tr><td>${x.reference_number}${x.is_demo?' <span class="badge">DEMO</span>':''}${x.overdue?' <span class="badge" style="background:#b91c1c;color:#fff">OVERDUE</span>':''}</td><td>${x.created_at.slice(0,10)}</td><td>${x.category_name||'-'}</td><td>${x.submission_type}</td><td>${x.title}</td><td>${x.is_anonymous?'Anonymous':(x.student_name||'-')}</td><td><span class="badge">${x.priority}</span></td><td><span class="badge">${x.status}</span></td><td>${x.officer||'-'}</td><td><a href="/issue/${x.reference_number}">View</a></td></tr>`).join('');}
+load();
+</script>{% endblock %}

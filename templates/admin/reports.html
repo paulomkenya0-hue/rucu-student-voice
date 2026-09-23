@@ -1,0 +1,18 @@
+{% extends "base.html" %}{% block title %}Reports — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Reports</h2><div class="card">
+<label>Report type<select id="rt"><option>Daily Report</option><option>Weekly Report</option><option>Monthly Report</option><option>Semester Report</option><option selected>Academic Year Report</option><option>Category Report</option><option>Student Satisfaction Report</option><option>Unresolved Issues Report</option><option>Critical Issues Report</option><option>Recurring Problems Report</option></select></label>
+<label>Approved by (jina la ofisa — litaonekana kwenye PDF/Excel)<input id="appr" placeholder="e.g. Dkt. J. Mhina"></label>
+<div class="btnrow"><button class="btn primary" onclick="gen('json')">Generate</button>
+<button class="btn" onclick="dl('pdf')">Export PDF</button>
+<button class="btn" onclick="dl('excel')">Export Excel</button>
+<button class="btn ghost" onclick="window.print()">Print</button></div></div>
+<div id="out"></div>{% endblock %}
+{% block scripts %}<script>
+async function gen(f){const t=document.getElementById('rt').value;
+if(f==='json'){const d=await (await fetch('/api/admin/report?type='+encodeURIComponent(t)+'&format=json',{headers:H()})).json();
+document.getElementById('out').innerHTML=`<div class="card"><h3>${d.title}</h3><p>Total: ${d.total} · Avg satisfaction: ${d.avg_satisfaction}/5 · Critical open: ${d.critical_open}</p><h4>Top categories</h4>${d.by_category.map(c=>`<p>${c.category}: ${c.count}</p>`).join('')}<h4>Status</h4>${d.by_status.map(c=>`<p>${c.status}: ${c.count}</p>`).join('')}</div>`;}
+else dl(f);}
+function dl(f){const t=document.getElementById('rt').value;const a2=document.getElementById('appr').value;
+fetch('/api/admin/report?type='+encodeURIComponent(t)+'&format='+f+'&approved_by='+encodeURIComponent(a2),{headers:{'Authorization':'Bearer '+TOK}}).then(r=>r.blob()).then(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`RUCU_report.${f==='pdf'?'pdf':'xlsx'}`;a.click();});}
+</script>{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% block title %}Dashboard — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>RUCU STUDENT VOICE — <span id="ay2">2026/2027</span></h2>
+<div class="card warn" id="demo-warn" style="display:none"><b>DEMO DATA</b> zipo kwenye mfumo — futa kabla ya production (Settings → Clear demo data).</div>
+<div class="statgrid" id="stats"></div>
+<div class="grid2">
+<div class="card"><h4>Feedback by Category</h4><canvas id="c1"></canvas></div>
+<div class="card"><h4>Issue Status</h4><canvas id="c2"></canvas></div>
+</div>
+<div class="grid2">
+<div class="card"><h4>Reports Over Time</h4><canvas id="c3"></canvas></div>
+<div class="card"><h4>Satisfaction Ratings</h4><canvas id="c4"></canvas></div>
+</div>
+<div class="card"><h4>Possible Recurring Issues <small>(admin must confirm)</small></h4><div id="rec"></div></div>
+{% endblock %}
+{% block scripts %}<script>
+(async()=>{
+const s=await (await fetch('/api/admin/stats',{headers:H()})).json();
+document.getElementById('stats').innerHTML=['total|TOTAL SUBMISSIONS','new|NEW','under_review|UNDER REVIEW','in_progress|IN PROGRESS','resolved|RESOLVED','critical|CRITICAL ISSUES'].map(k=>{const[a,b]=k.split('|');return `<div class="stat"><small>${b}</small><b>${s[a]??0}</b></div>`}).join('')+`<div class="stat"><small>AVG SATISFACTION</small><b>${s.avg_satisfaction}/5</b></div>`+`<div class="stat"><small>OVERDUE (SLA)</small><b>${s.overdue??0}</b></div>`+`<div class="stat"><small>APPEALS OPEN</small><b>${s.appeals_open??0}</b></div>`;
+if(s.demo_count>0) document.getElementById('demo-warn').style.display='block';
+const a=await (await fetch('/api/admin/analytics',{headers:H()})).json();
+const mk=(id,type,labels,data)=>new Chart(document.getElementById(id),{type,data:{labels,datasets:[{data}]},options:{plugins:{legend:{display:type==='doughnut'}}}});
+mk('c1','bar',a.by_category.map(x=>x.label),a.by_category.map(x=>x.value));
+mk('c2','doughnut',a.by_status.map(x=>x.label),a.by_status.map(x=>x.value));
+mk('c3','line',a.by_month.map(x=>x.label),a.by_month.map(x=>x.value));
+mk('c4','bar',a.by_satisfaction.map(x=>x.label+'★'),a.by_satisfaction.map(x=>x.value));
+const r=await (await fetch('/api/admin/recurring',{headers:H()})).json();
+document.getElementById('rec').innerHTML=(r.groups||[]).map(g=>`<span class="badge">POSSIBLE RECURRING: ${g.keyword} × ${g.count}</span>`).join(' ')||'No recurring pattern yet.';
+})();
+</script>{% endblock %}

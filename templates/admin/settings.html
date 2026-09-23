@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% block title %}Settings — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Settings</h2>
+<div class="card"><h4>University</h4><label>Name<input id="s-university_name"></label>
+<label>Academic year<input id="s-academic_year"></label>
+<label>Contact email<input id="s-contact_email"></label><label>Contact phone<input id="s-contact_phone"></label>
+<label>Reference prefix<input id="s-ref_prefix"></label>
+<h4>SMS</h4><label>Provider (demo-log / beem / africastalking)<input id="s-sms_provider"></label>
+<label>API key<input id="s-sms_api_key"></label><label>Sender name<input id="s-sms_sender"></label>
+<h4>SLA & Poll</h4><label>SLA days (deadline ya issue)<input id="s-sla_days"></label>
+<label>Swali la kura ya muhula<input id="s-poll_question"></label>
+<label>Muhula<input id="s-poll_semester"></label>
+<button class="btn primary" onclick="save()">Save</button></div>
+<div class="card"><h4>Kura ya muhula (poll)</h4><div id="pollres"></div>
+<label>Swali jipya (hufunga lililotangulia)<input id="nq" placeholder="Swali…"></label>
+<button class="btn" onclick="newPoll()">Anzisha kura mpya</button></div>
+<div class="card"><h4>Categories</h4><div id="cats"></div>
+<div class="grid2"><input id="nc" placeholder="New category name"><input id="nd" placeholder="Description"><button class="btn" onclick="addCat()">Add Category</button></div></div>
+<div class="card"><h4>Demo data</h4><button class="btn" onclick="seed()">Load DEMO DATA</button>
+<button class="btn danger" onclick="clearDemo()">Clear demo data (before production)</button></div>
+{% endblock %}
+{% block scripts %}<script>
+async function load(){const s=await (await fetch('/api/admin/settings',{headers:H()})).json();
+for(const k of ['university_name','academic_year','contact_email','contact_phone','ref_prefix','sms_provider','sms_api_key','sms_sender','sla_days','poll_question','poll_semester']) document.getElementById('s-'+k).value=s[k]||'';
+const c=await (await fetch('/api/admin/categories',{headers:H()})).json();
+document.getElementById('cats').innerHTML=c.map(x=>`<p>${x.name} ${x.active?'':'(inactive)'} <button onclick="delCat(${x.id})">Deactivate</button></p>`).join('');
+const p=await (await fetch('/api/poll')).json();
+document.getElementById('pollres').innerHTML=p.active?`<p>${p.question}<br>Kura: ${p.total} · Wastani: ${p.average}/5</p>`:'Hakuna kura.';}
+async function save(){const o={};for(const k of ['university_name','academic_year','contact_email','contact_phone','ref_prefix','sms_provider','sms_api_key','sms_sender','sla_days','poll_question','poll_semester']) o[k]=document.getElementById('s-'+k).value;
+await fetch('/api/admin/settings',{method:'PUT',headers:H(),body:JSON.stringify(o)});alert('Saved');}
+async function addCat(){await fetch('/api/admin/categories',{method:'POST',headers:H(),body:JSON.stringify({name:document.getElementById('nc').value,description:document.getElementById('nd').value})});load();}
+async function delCat(id){await fetch('/api/admin/categories/'+id,{method:'DELETE',headers:H()});load();}
+async function seed(){await fetch('/api/admin/seed-demo',{method:'POST',headers:H()});alert('Demo loaded');}
+async function clearDemo(){await fetch('/api/admin/clear-demo',{method:'POST',headers:H()});alert('Demo cleared');}
+async function newPoll(){await fetch('/api/admin/polls',{method:'POST',headers:H(),body:JSON.stringify({question:document.getElementById('nq').value,semester:document.getElementById('s-poll_semester').value})});load();}
+load();
+</script>{% endblock %}

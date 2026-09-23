@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% block title %}RUCU Student Voice — Home{% endblock %}
+{% block content %}
+<section class="hero">
+<h1>RUCU STUDENT VOICE</h1>
+<p class="sub" data-sw="Ruaha Catholic University — Maoni ya Wanafunzi na Uboreshaji wa Taasisi" data-en="Ruaha Catholic University — Student Feedback & Institutional Improvement">Ruaha Catholic University — Student Feedback & Institutional Improvement · <b id="ay">2026/2027</b></p>
+<p class="msg">Sauti yako kuhusu <b>Wizara ya Mikopo (HELSB/BOOM/Ada)</b> inatusaidia kuboresha huduma — toa maoni, ripoti changamoto ya mkopo, au pendekeza uboreshaji.</p>
+<div class="btnrow">
+<a class="btn primary" href="/submit?type=General Feedback" data-sw="Tuma Maoni" data-en="Submit Feedback">Submit Feedback</a>
+<a class="btn danger" href="/submit?type=Challenge/Problem" data-sw="Ripoti Changamoto" data-en="Report a Challenge">Report a Challenge</a>
+<a class="btn" href="/track" data-sw="Fuatilia Ripoti" data-en="Track My Report">Track My Report</a>
+<a class="btn ghost" href="#how" data-sw="Jinsi Inavyofanya" data-en="Learn How It Works">Learn How It Works</a>
+</div></section>
+<section class="card" id="notice-sec" style="display:none"><h3>Matangazo ya Chuo</h3><div id="notices"></div></section>
+<section class="cards">
+<div class="card"><h3 data-sw="TOA MAONI" data-en="GIVE FEEDBACK">GIVE FEEDBACK</h3><p data-sw="Toa maoni yako kuhusu huduma za chuo." data-en="Share your opinion about university services.">Share your opinion about university services.</p><a href="/submit?type=General Feedback">Give feedback →</a></div>
+<div class="card"><h3 data-sw="RIPOTI CHANGAMOTO" data-en="REPORT A CHALLENGE">REPORT A CHALLENGE</h3><p data-sw="Tuambie tatizo unalokutana nalo." data-en="Tell us about a problem or challenge you are experiencing.">Tell us about a problem or challenge you are experiencing.</p><a href="/submit?type=Challenge/Problem">Report →</a></div>
+<div class="card"><h3 data-sw="PENDEKEZA UBORESHAJI" data-en="SUGGEST AN IMPROVEMENT">SUGGEST AN IMPROVEMENT</h3><p data-sw="Pendekeza namna chuo kinavyoweza kuboresha huduma." data-en="Recommend ways the university can improve its services.">Recommend ways the university can improve its services.</p><a href="/submit?type=Suggestion">Suggest →</a></div>
+</section>
+<section class="card" id="poll-sec" style="display:none"><h3>Kura ya Muhula</h3><p id="poll-q"></p>
+<div class="btnrow" id="poll-btns"></div><p class="muted" id="poll-res"></p></section>
+<section id="how" class="card"><h3>How it works</h3>
+<ol><li>Open link → read purpose → choose Give Feedback or Report Challenge.</li>
+<li>Fill the form → choose anonymous or identified → accept privacy notice → Submit.</li>
+<li>Receive reference number like <b>RUCU-2026-000001</b> (+ SMS code if you gave a phone number).</li>
+<li>Track progress with your reference number. Admins review, assign, respond and resolve.</li></ol>
+<p class="muted">Only for Ruaha Catholic University (RUCU) students. Information will be configured by the system administrator where not yet set.</p>
+</section>
+<button class="ai-fab" style="position:fixed;right:12px;bottom:12px;z-index:60" onclick="document.getElementById('pub-ai').style.display='block'">Uliza RUCUSO AI</button>
+<div id="pub-ai" class="ai-box" style="display:none">
+<h4>RUCUSO AI — Msaidizi <button onclick="document.getElementById('pub-ai').style.display='none'">×</button></h4>
+<div id="pub-log" class="ai-log"></div>
+<input id="pub-q" placeholder="Uliza… mf. Natuma vipi maoni?">
+<button class="btn primary" onclick="pubAsk()">Uliza</button>
+</div>
+{% endblock %}
+{% block scripts %}<script>
+fetch('/api/announcements').then(r=>r.json()).then(a=>{
+if(a.length){document.getElementById('notice-sec').style.display='block';
+document.getElementById('notices').innerHTML=a.map(x=>`<p><b>${x.title}</b> <small>${x.created_at.slice(0,10)}</small><br>${x.message}</p>`).join('');}});
+fetch('/api/poll').then(r=>r.json()).then(p=>{
+if(!p.active) return; document.getElementById('poll-sec').style.display='block';
+document.getElementById('poll-q').textContent=p.question+' ('+p.semester+')';
+document.getElementById('poll-btns').innerHTML=[1,2,3,4,5].map(n=>`<button class="btn" onclick="vote(${n})">${n}★</button>`).join('');
+document.getElementById('poll-res').textContent=p.total?`Kura: ${p.total} · Wastani: ${p.average}/5 (ingia My Space kupiga kura)`:'Ingia My Space kupiga kura';});
+async function vote(n){const t=localStorage.getItem('stu_token');
+if(!t){alert('Ingia My Space kwanza kupiga kura.');location.href='/my';return;}
+const r=await fetch('/api/poll/vote',{method:'POST',headers:{'Content-Type':'application/json','X-Student-Token':t},body:JSON.stringify({rating:n})});
+const d=await r.json(); alert(d.message||d.error||'Error');}
+async function pubAsk(){const q=document.getElementById('pub-q').value; if(!q) return;
+const log=document.getElementById('pub-log'); log.innerHTML+=`<p><b>Wewe:</b> ${q}</p>`;
+const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})});
+const d=await r.json(); log.innerHTML+=`<p><b>RUCUSO AI:</b> ${d.answer||'Error'}</p>`; log.scrollTop=1e6;}
+</script>{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}Matangazo — RUCU{% endblock %}
+{% block content %}{% include "admin/_nav.html" %}
+<h2>Matangazo (Announcements)</h2>
+<div class="card"><h4>Tangazo jipya</h4>
+<label>Kichwa<input id="a-title" placeholder="e.g. BOOM imeingia"></label>
+<label>Ujumbe<textarea id="a-msg" rows="3"></textarea></label>
+<label class="check"><input type="checkbox" id="a-sms"> Tuma pia kwa SMS kwa wapokea mkopo wote</label>
+<button class="btn primary" onclick="add()">Chapisha</button></div>
+<div class="card"><div id="list"></div></div>{% endblock %}
+{% block scripts %}<script>
+async function load(){const d=await (await fetch('/api/admin/announcements',{headers:H()})).json();
+document.getElementById('list').innerHTML=d.map(a=>`<p><b>${a.title}</b> ${a.active?'':'(hidden)'}<br>${a.message}<br><small>${a.created_at.slice(0,16)}</small> <button onclick="del(${a.id})">Ficha</button></p>`).join('')||'Hakuna.';}
+async function add(){const r=await fetch('/api/admin/announcements',{method:'POST',headers:H(),body:JSON.stringify({title:document.getElementById('a-title').value,message:document.getElementById('a-msg').value,notify_sms:document.getElementById('a-sms').checked})});
+const d=await r.json(); alert(r.ok?('Imechapishwa.'+(d.sms_sent?` SMS: ${d.sms_sent}`:'')):d.error); load();}
+async function del(id){await fetch('/api/admin/announcements/'+id,{method:'DELETE',headers:H()});load();}
+load();
+</script>{% endblock %}
